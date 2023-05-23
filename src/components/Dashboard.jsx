@@ -1,67 +1,57 @@
 import { useState, useEffect } from 'react';
 import { ToggleButton, ToggleButtonGroup} from "@mui/material";
 
-
 export function Dashboard() {
     const [formats, setFormats] = useState();
     const [dashboardView, setDashboardView] = useState();
-
-    useEffect((dashboardView) => {
-        if(dashboardView === 1) {
-            return (
-                <div>
-                    <PostsDashboard />
-                </div>
-            )
-        }
-        if(dashboardView === 2) {
-            return (
-                <div>
-                    <PhotoGallery />
-                </div>
-            )
-        }
-    }, [dashboardView]);
+    const postsView = 1;
+    const photoGalleryView = 2;
 
     function handleFormatChange(event, newFormat) {
         setFormats(newFormat);
         console.log(newFormat);
     }
 
-    function handleOnClick(number) {
-        setDashboardView(number)
+    function onClickOpenTab(number) {
+        if(dashboardView === number) {
+            setDashboardView(null)
+        } else {
+            setDashboardView(number)
+        }
     }
 
     return (
         <div>
             <ToggleButtonGroup value={formats} exclusive onChange={handleFormatChange}>
-                <ToggleButton value="1" variant="contained" onClick={ () => handleOnClick(1) }>
+                <ToggleButton value="1" variant="contained" onClick={ () => onClickOpenTab(postsView) }>
                     Posts
                 </ToggleButton>
-                <ToggleButton value="2" variant="contained" onClick={ () => handleOnClick(2) }>
+                <ToggleButton value="2" variant="contained" onClick={ () => onClickOpenTab(photoGalleryView) }>
                     Photos
                 </ToggleButton>
             </ToggleButtonGroup>
+            {dashboardView === 1 ? <UserDashboard props={1}/> : <></> }
+            {dashboardView === 2 ? <UserDashboard props={2}/> : <></> }
         </div>
-
     )
 }
 
-function PhotoGallery() {
-
-}
-
-function PostsDashboard() {
+function UserDashboard(props) {
     const [userId, setUserId] = useState(null);
 
     function handleOnClick(i) {
-        setUserId(i);
+        if(userId === i) {
+            setUserId(null)
+        } else {
+            setUserId(i)
+        }
     }
 
     return (
         <div>
             <UserButtons handleClick={handleOnClick}/>
-            {userId !== null ? <UserPosts userId={ userId } /> : null}
+            {props.props === 2 && userId !== null ? <UserPhotosList userId={ userId } /> : null}
+            {props.props === 1 && userId !== null ? <UserPostsList userId={ userId } /> : null}
         </div>
     )
 }
@@ -107,7 +97,7 @@ function UserButtons(props) {
     )
 }
 
-function UserPosts(props) {
+function UserPostsList(props) {
     const [postsData, setPostsData] = useState();
     const userId = props.userId;
 
@@ -134,5 +124,35 @@ function UserPosts(props) {
     return postsData.map((post) => (
         <p key={ post.id }>{ post.title }</p>
     ));
-}
+};
+
+function UserPhotosList(props) {
+    const [albumsData, setAlbumsData] = useState();
+    const userId = props.userId;
+
+    useEffect(() => {
+        async function fetchData() {
+            const [albumsResponse] =
+                await Promise.all([
+                    fetch(
+                        'https://jsonplaceholder.typicode.com/photos?albumId=' + userId,
+                    )
+                ]);
+            const [albums] = await Promise.all([
+                albumsResponse.json(),
+            ]);
+
+            setAlbumsData(albums);
+        }
+        fetchData();
+    }, [userId]);
+
+    if (!albumsData) {
+        return null;
+    }
+    return albumsData.map((album) => (
+        <img key={album.id} src={album.url} alt={album.title}/>
+    ));
+};
+
 

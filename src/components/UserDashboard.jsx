@@ -1,4 +1,4 @@
-import {useState} from "@types/react";
+import { useState } from 'react';
 import {UserButtons} from "./UserButtons.jsx";
 import { UserPostsList } from "./UserPostsList.jsx";
 import { UserPhotosList } from "./UserPhotosList.jsx";
